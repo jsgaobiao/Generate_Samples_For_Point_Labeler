@@ -190,7 +190,7 @@ void DsvlProcessor::Processing()
             cv::setMouseCallback("segmentation", DsvlProcessor::MouseCallback, &sampler);
             // 生成输入数据的样本
             sampler.GenerateAllSamplesInRangeImage(&rm, &rm_first, seglog, vout);
-            std::cout<<"Generate Samples: "<<rm.millsec<<std::endl;
+            std::cout<<"Generate Samples: "<<rm.fno<<std::endl;
         }
 
     }

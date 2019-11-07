@@ -52,8 +52,7 @@ int main(int argc, char* argv[])
     std::printf("[calib](default): P40n.calib\n");
     std::printf("[colortable](default): colortable.txt\n");
     std::printf("[output_dir](default): data_for_point_labeler\n");
-    std::printf("[bbox](optional): bbx-all.log (must together with master file)\n");
-    std::printf("[master](optional): 4.master (must together with bbox file)\n )");
+    std::printf("[bbox](optional): bbx-all.log\n");
 
     if (argc < 3) {
         std::fprintf(stderr, "Args not enough !\n");
@@ -85,15 +84,15 @@ int main(int argc, char* argv[])
         }
     }
     // 读入包围框文件，包围框用于初始点云标签和instance信息
-//    flagBbox = false;
-//    if (argc > 6) {
-//        if (argc > 7 && LoadBbx(argv[5]) && LoadMaster(argv[6])) {
-//            flagBbox = true;
-//        }
-//        else {
-//            std::fprintf(stderr, "Loading bbox file failed!\n");
-//        }
-//    }
+    flagBbox = false;
+    if (argc > 6) {
+        if (LoadBbx(argv[6])) {
+            flagBbox = true;
+        }
+        else {
+            std::fprintf(stderr, "Loading bbox file failed!\n");
+        }
+    }
 
     // 输出的点云位姿
     poseFileName = outputDir + "poses.txt";

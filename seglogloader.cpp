@@ -133,7 +133,7 @@ void SegLogLoader::loadSegLog(char *szFile)
         if (!streamcnt[i]) continue;
         printf ("LABEL%d --- stream %d(%.2f%%) sample %d(%.2f%%)\n", i, streamcnt[i], streamcnt[i]/(double)streamtotal*100, samplecnt[i], samplecnt[i]/(double)sampletotal*100);
     }
-    printf ("TOTAL --- stream %d sample %d\n", streamtotal, sampletotal);
+//    printf ("TOTAL --- stream %d sample %d\n", streamtotal, sampletotal);
 }
 
 void SegLogLoader::loadColorTabel(char *filename)

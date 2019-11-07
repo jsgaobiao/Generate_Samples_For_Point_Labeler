@@ -52,6 +52,7 @@ typedef struct
     double ox,oy,pixelsize;
 }MASTER;
 
+bool LoadMaster(char *szFile);
 bool LoadBbx(char *szFile);
 void GetRectPts(point2d *cp, point2d *v1, double olen1, double olen2, point2d *p, double margin);
 bool IsPtInRect(cv::Point3d *pt, point2d *prt1, point2d *prt2, point2d *prt3);

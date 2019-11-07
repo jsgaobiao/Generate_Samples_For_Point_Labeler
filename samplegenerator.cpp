@@ -18,6 +18,10 @@ extern point3d calib_shv, calib_ang;
 extern string poseFileName;
 extern ofstream fout;
 
+double pixelSize = 0.2;
+double curH = 100;  // m
+double curW = 100;  // m
+
 SampleGenerator::SampleGenerator(RMAP *prm_)
 {
     prm = prm_;
@@ -25,30 +29,54 @@ SampleGenerator::SampleGenerator(RMAP *prm_)
 }
 
 // 查找是否有Bbox包围了点pnt，返回pnt的标签和instance id
-void findBbox(int miliSec, cv::Point3d pnt, int &ptLabel, int &ptInstance)
+void findBbox(int miliSec, cv::Point3d pnt, int &ptLabel, int &ptInstance, cv::Mat &curLidar, point3d shv_now)
 {
     // 枚举Group，一个物体的多个轨迹Track构成Group
     for (int ng = 0; ng < groups.size(); ng++) {
         GROUP	*gr = &groups[ng];
         if (!gr->tracks.size() || !gr->val) continue;
+//        if (miliSec < gr->smilli || miliSec > gr->emilli) continue;
         // 枚举Track，同一物体不同帧的Bbox构成Track
         for (int nt = 0; nt < gr->tracks.size(); nt++) {
             TRACK	*tr = &gr->tracks[nt];
             if (!tr->bbxs.size() || !tr->val) continue;
+//            if (miliSec < tr->smilli || miliSec > tr->emilli) continue;
             // 枚举Bbox
             for (int nb = 0; nb < tr->bbxs.size(); nb++) {
                 BBX	*bx = &tr->bbxs[nb];
                 if (!bx->val) continue;
-
                 point2d	p[4];
                 GetRectPts(&bx->cp, &bx->hv, gr->bbx.w1, gr->bbx.w2, p, 0);
 
-                if (IsPtInRect(&pnt, &p[0], &p[1], &p[3]) && pnt.z < gr->bbx.h1) {
-                    ptLabel = gr->label; ptInstance = tr->prid;
+                if (IsPtInRect(&pnt, &p[0], &p[1], &p[3])) {
+                    if (pnt.z < gr->bbx.h1) {
+                        // 绘制当前的包围框
+                        for (int i = 0; i < 4; i ++) {
+                            p[i].x -= shv_now.x; p[i].y -= shv_now.y;
+                            p[i].x /= pixelSize; p[i].y /= pixelSize;
+                            p[i].x += curLidar.rows/2; p[i].y += curLidar.cols/2;
+                        }
+                        for (int i = 0; i < 4; i ++) {
+                            cv::line(curLidar, cv::Point(p[i].y, p[i].x), cv::Point(p[(i+1)%4].y, p[(i+1)%4].x), cv::Scalar(0,255,255), 1);
+                        }
+                        ptLabel = gr->label; ptInstance = tr->prid;
+                        return;
+                    }
                 }
             }
         }
     }
+}
+
+void setPixel(cv::Mat &curLidar, cv::Point2d pntPixel, int b, int g, int r)
+{
+    pntPixel.x += curLidar.rows/2;
+    pntPixel.y += curLidar.cols/2;
+    if (pntPixel.x < 0 || pntPixel.y < 0 || pntPixel.x >= curLidar.rows || pntPixel.y >= curLidar.cols)
+        return;
+    curLidar.at<cv::Vec3b>(pntPixel.x, pntPixel.y)[0] = b;
+    curLidar.at<cv::Vec3b>(pntPixel.x, pntPixel.y)[1] = g;
+    curLidar.at<cv::Vec3b>(pntPixel.x, pntPixel.y)[2] = r;
 }
 
 void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm, SegLogLoader *seglog, cv::VideoWriter &out)
@@ -80,11 +108,11 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
     cv::Mat shv = (cv::Mat_<double>(4,4)<<1,0,0,shv_x,0,1,0,shv_y,0,0,1,shv_z,0,0,0,1);
     cv::Mat rot = shv*rot_z*rot_y*rot_x;
     cv::Mat trans = rot*crot;
-    cv::Matx34d transMat;
+    cv::Matx33d transMat;
     for(int i=0;i<3;i++)
     {
         for(int j=0;j<4;j++) {
-            transMat(i, j) = trans.at<double>(i,j);
+            if (j < 3) transMat(i, j) = trans.at<double>(i,j);
             fout << trans.at<double>(i,j) << ' ';
         }
     }
@@ -127,7 +155,7 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
             }
         }
     }
-    printf("Total region id number : %d\n", idx_set.size());
+//    printf("Total region id number : %d\n", idx_set.size());
 
     // outsample : GT输出图像
     cv::Mat outsample(cv::Size(WIDTH, HEIGHT), CV_8UC1, cv::Scalar(0));
@@ -159,6 +187,10 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
         }
     }
 
+    // 可视化当前帧的激光点和包围框
+    cv::Mat curLidar(int(curH/pixelSize), int(curW/pixelSize), CV_8UC3);
+    curLidar.setTo(0);
+
     for (int y = 0; y <prm->len; y++) {
         for (int x = 0; x < prm->wid; x++) {
             if(!prm->pts[y*prm->wid+x].i)
@@ -178,29 +210,34 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
 
             // 判断激光点是不是在某个boudingbox里
             int ptLabel = -1;
-            int ptInstance = 0;
-//            cv::Point3d pnt = transMat * cv::Point3d(prm->pts[y*prm->wid+x].x, prm->pts[y*prm->wid+x].y, prm->pts[y*prm->wid+x].z);
-//            pnt.x = (pnt.x - mapInfo.ox);
-//            pnt.y = (pnt.y - mapInfo.oy);
-//            findBbox(prm->millsec, pnt, ptLabel, ptInstance);
+            int ptInstance = -1;
+            cv::Point3d pnt = transMat * cv::Point3d(prm->pts[y*prm->wid+x].x, prm->pts[y*prm->wid+x].y, prm->pts[y*prm->wid+x].z);
+            cv::Point2d pntPixel(int(pnt.x / pixelSize), int(pnt.y / pixelSize));
+            pnt = pnt + cv::Point3d(shv_now.x, shv_now.y, 0);
+            setPixel(curLidar, pntPixel, 255, 255, 255);
+            findBbox(prm->millsec, pnt, ptLabel, ptInstance, curLidar, shv_now);
+            if (ptLabel == -1) ptLabel = tmpRegId;
 
-            if (tmpRegId > 0) {
-                if (regionIdMapLabel.find(tmpRegId) != regionIdMapLabel.end()) {
-                    int l = seglog->colorTable[regionIdMapLabel[tmpRegId]][3];
-                    if(l>0 && l<8)
-                        l += (tmpRegId<<16);
+            if (ptLabel > 0) {
+                if (ptLabel < 22){ // 包围框中的点
+                    int l = ptLabel;
+                    // 如果有instance标签(高16位记录instance id，低16位记录类别)
+                    if (ptInstance > 0) l += (ptInstance<<16);
                     lab_fp.write((char*) &l, sizeof(int));
                 }
-                else if (tmpRegId < 21){
-                    int l = seglog->colorTable[tmpRegId%21][3];
+                else
+                if (regionIdMapLabel.find(ptLabel) != regionIdMapLabel.end()) {
+                    int l = seglog->colorTable[regionIdMapLabel[ptLabel]][3];
+                    // 如果有instance标签(高16位记录instance id，低16位记录类别)
+                    if (ptInstance > 0) l += (ptInstance<<16);
                     lab_fp.write((char*) &l, sizeof(int));
                 }
                 else {
-                    int l = 0;
+                    int l = 0; // unlabelled
                     lab_fp.write((char*) &l, sizeof(int));
                 }
             }
-            else if (tmpRegId == GROUND) {
+            else if (ptLabel == GROUND) {
                 int l = 22;
                 lab_fp.write((char*) &l, sizeof(int));
             }
@@ -213,6 +250,8 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
     pts_fp.close();
     lab_fp.close();
     tag_fp.close();
+    // 可视化当前帧的激光和包围框
+    cv::imshow("currentFrameLidar", curLidar);
 
     cv::Mat rangeImg, mergeImg;
     cv::resize(cv::cvarrToMat(prm->rMap), rangeImg, cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
