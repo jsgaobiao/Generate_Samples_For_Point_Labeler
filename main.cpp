@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
     // 如果修改类别数量，需要修改Ground对应的类别编号（samplegenerator.cpp 359行）
 
     // 激光雷达到GPS标定文件
-    std::string calibFileName = "P40.calib";
+    std::string calibFileName = "P40n.calib";
     if (argc > 3) calibFileName = argv[3];
     std::string colortablefilename = "colortable.txt";
     if (argc > 4) colortablefilename = argv[4];
