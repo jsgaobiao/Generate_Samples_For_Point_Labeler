@@ -7,7 +7,9 @@
 #include <map>
 #include <unordered_set>
 #include <fstream>
+#include <cstdlib>
 #include <string>
+#include <cstring>
 #include <cmath>
 #include <opencv2/imgproc.hpp>
 
@@ -19,6 +21,8 @@ extern point3d calib_shv, calib_ang;
 extern string poseFileName;
 extern ofstream fout;
 extern bool flagBbox;
+extern bool bbox_overwrite_flag;
+extern std::string outputDir;
 
 double pixelSize = 0.1;
 double curH = 100;  // m
@@ -44,6 +48,7 @@ void setPixel(cv::Mat &curLidar, cv::Point2d pntPixel, int b, int g, int r)
 // 在局部二维平面画出所有bbox
 void drawBbox(int milliSec, cv::Mat &bboxMap, cv::Mat &curLidar, point3d shv_now)
 {
+    int cntBbox = 0;
     // 枚举Group，一个物体的多个轨迹Track构成Group
     for (int ng = 0; ng < groups.size(); ng++) {
         GROUP	*gr = &groups[ng];
@@ -77,6 +82,7 @@ void drawBbox(int milliSec, cv::Mat &bboxMap, cv::Mat &curLidar, point3d shv_now
                 const int num_pnt = 4;
                 // bboxMap标记了实心bbox框和bbox的高度\类别标签\Instance标签（一个Group用第一个track的prid作为instance的标签）
                 cv::fillPoly(bboxMap, ppt, &num_pnt, 1, cv::Scalar(gr->bbx.h1, gr->label, gr->tracks[0].prid));
+                cv::putText(curLidar, std::to_string(gr->tracks[0].prid), cv::Point(p[0].y, p[0].x), cv::FONT_HERSHEY_COMPLEX, 0.3, cv::Scalar(0,0,255));
                 // curLidar用于可视化，画的是空心框
                 // 静态物体黄色框，动态物体红色框
                 if (tr->isstatic)
@@ -156,6 +162,7 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
     else filename = str_fno;
     ofstream pts_fp(bin_path+filename+".bin",ios::binary);
     ofstream lab_fp(label_path+filename+".label",ios::binary);
+    ifstream lab_bak_fp(outputDir+"label_bak/"+filename+".label",ios::binary);
     ofstream tag_fp(tag_path+filename+".tag",ios::binary);
 
     //determine all region id, prm->regnum is not enough
@@ -239,11 +246,11 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
                 // 查找是否有Bbox包围了点pnt，返回pnt的标签和instance id
                 if (pntPixel.x >= 0 && pntPixel.y >= 0 && pntPixel.x < curLidar.rows && pntPixel.y < curLidar.cols) {
                     if (bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[0] != 0
-                        && bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[0] >= pnt.z) {
+                        && bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[0]+0.2 >= pnt.z) {
                         // bbox内的激光点
                         setPixel(curLidar, pntPixel, 0, 255, 0);
                         ptLabel = bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[1];
-                        ptInstance = bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[2];
+                        ptInstance = int(bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[2]) % ((1<<17)-1);
                     }
                     else {
                         setPixel(curLidar, pntPixel, 255, 255, 255);
@@ -253,9 +260,11 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
             if (ptLabel == -1) ptLabel = tmpRegId;
 
 
+            int l_bak;
+            lab_bak_fp.read((char*)&l_bak, sizeof(int));
             if (ptLabel > 0) {
                 if (ptLabel < 22){ // 包围框中的点
-                    int l;
+                    int l = ptLabel;
                     // 找一下激光点是不是已经有标注了
                     if (regionIdMapLabel.find(tmpRegId) != regionIdMapLabel.end()) {
                         l = seglog->colorTable[regionIdMapLabel[tmpRegId]][3];
@@ -277,24 +286,37 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
                     int l = seglog->colorTable[regionIdMapLabel[ptLabel]][3];
                     // 如果有instance标签(高16位记录instance id，低16位记录类别)
                     if (ptInstance > 0) l += (ptInstance<<16);
-                    lab_fp.write((char*) &l, sizeof(int));
+                    if (bbox_overwrite_flag)
+                        lab_fp.write((char*) &l, sizeof(int));
+                    else
+                        lab_fp.write((char*) &l_bak, sizeof(int));
                 }
                 else {
                     int l = 0; // unlabelled
-                    lab_fp.write((char*) &l, sizeof(int));
+                    if (bbox_overwrite_flag)
+                        lab_fp.write((char*) &l, sizeof(int));
+                    else
+                        lab_fp.write((char*) &l_bak, sizeof(int));
                 }
             }
             else if (ptLabel == GROUND) {
                 int l = 22;
-                lab_fp.write((char*) &l, sizeof(int));
+                if (bbox_overwrite_flag)
+                    lab_fp.write((char*) &l, sizeof(int));
+                else
+                    lab_fp.write((char*) &l_bak, sizeof(int));
             }
             else {
                 int l = 0;
-                lab_fp.write((char*) &l, sizeof(int));
+                if (bbox_overwrite_flag)
+                    lab_fp.write((char*) &l, sizeof(int));
+                else
+                    lab_fp.write((char*) &l_bak, sizeof(int));
             }
         }
     }
     pts_fp.close();
+    lab_bak_fp.close();
     lab_fp.close();
     tag_fp.close();
     // 可视化当前帧的激光和包围框
