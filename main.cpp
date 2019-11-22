@@ -17,6 +17,7 @@ std::string videoName;
 std::string videoNameSeg;
 std::string bin_path;
 std::string label_path;
+std::string label_bak_path;
 std::string poseFileName;
 std::string outputDir;
 std::string tag_path;
@@ -109,6 +110,7 @@ int main(int argc, char* argv[])
     videoNameSeg = outputDir + "seg.avi";
     imgname = outputDir + "images/";
     bin_path = outputDir + "velodyne/";
+    label_bak_path = outputDir + "labels_bak/";
     label_path = outputDir + "labels/";
     tag_path = outputDir + "tag/";
 

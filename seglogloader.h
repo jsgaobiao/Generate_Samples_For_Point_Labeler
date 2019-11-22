@@ -7,6 +7,7 @@ extern std::string videoName;
 extern std::string videoNameSeg;
 extern std::string bin_path;
 extern std::string label_path;
+extern std::string label_bak_path;
 
 extern int HEIGHT;
 extern int WIDTH;

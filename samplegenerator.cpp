@@ -162,7 +162,7 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
     else filename = str_fno;
     ofstream pts_fp(bin_path+filename+".bin",ios::binary);
     ofstream lab_fp(label_path+filename+".label",ios::binary);
-    ifstream lab_bak_fp(outputDir+"label_bak/"+filename+".label",ios::binary);
+    ifstream lab_bak_fp(label_bak_path+filename+".label",ios::binary);
     ofstream tag_fp(tag_path+filename+".tag",ios::binary);
 
     //determine all region id, prm->regnum is not enough
@@ -262,6 +262,7 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
 
             int l_bak;
             lab_bak_fp.read((char*)&l_bak, sizeof(int));
+            l_bak = l_bak & 0xffff;
             if (ptLabel > 0) {
                 if (ptLabel < 22){ // 包围框中的点
                     int l = ptLabel;
