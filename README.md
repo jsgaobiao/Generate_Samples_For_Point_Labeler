@@ -107,5 +107,3 @@
 
       ![](/home/gaobiao/Documents/GenerateSamplesForPointLabeler/README_assets/visuals.png)
 
-   7. 
-
