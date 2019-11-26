@@ -106,6 +106,12 @@ int main(int argc, char* argv[])
     poseFileName = outputDir + "poses.txt";
     fout.open(poseFileName.c_str());
 
+    // 输出point_labeler用的标定文件（固定值，不用动）
+    ofstream fCalib;
+    fCalib.open(outputDir + "calib.txt");
+    fCalib << "P0: 1 0 0 0 0 1 0 0 0 0 1 0\nP1: 1 0 0 0 0 1 0 0 0 0 1 0\nP2: 1 0 0 0 0 1 0 0 0 0 1 0\nP3: 1 0 0 0 0 1 0 0 0 0 1 0\nTr: 1 0 0 0 0 1 0 0 0 0 1 0\n";
+    fCalib.close();
+
     videoName = outputDir + "gt.avi";
     videoNameSeg = outputDir + "seg.avi";
     imgname = outputDir + "images/";
