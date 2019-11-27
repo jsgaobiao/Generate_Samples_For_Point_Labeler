@@ -269,11 +269,11 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
                     // 找一下激光点是不是已经有标注了
                     if (regionIdMapLabel.find(tmpRegId) != regionIdMapLabel.end()) {
                         l = seglog->colorTable[regionIdMapLabel[tmpRegId]][3];
-                        // 如果包围框内的点是unlabelled\unkown\splited object\merged object，那么用包围框标签赋值
-                        if (l==0 || l==18 || l==19 || l==20) {
+                        // 如果包围框内的点是非地面点，那么用包围框标签赋值
+                        if (l != 22) {
                             l = ptLabel;
                         }
-                        else if (l != ptLabel) { // 已经有了有效标注，那么不归为这个Instance
+                        else if (l != ptLabel) { // 已经有了地面点标注，那么不归为这个Instance
                             ptInstance = -1;
                         }
                     }
