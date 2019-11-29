@@ -75,10 +75,10 @@
    2. **修改setting.cfg的设置，建议配置如下：（如果程序崩溃或内存不够，可以将tile size调小）**
 
       ```
-      tile size: 100.0
-      max scans: 100
+      tile size: 150.0
+      max scans: 200
       min range: 2.5
-      max range: 60.0
+      max range: 80.0
       gpu memory: 4
       ```
 

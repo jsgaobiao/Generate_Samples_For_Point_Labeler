@@ -21,7 +21,7 @@ extern point3d calib_shv, calib_ang;
 extern string poseFileName;
 extern ofstream fout;
 extern bool flagBbox;
-extern bool bbox_overwrite_flag;
+extern int bbox_overwrite_flag;
 extern std::string outputDir;
 
 double pixelSize = 0.1;
@@ -69,7 +69,7 @@ void drawBbox(int milliSec, cv::Mat &bboxMap, cv::Mat &curLidar, point3d shv_now
                     if (fabs(milliSec - bx->milli) > 200) continue;
                 }
                 point2d	p[4];
-                GetRectPts(&bx->cp, &bx->hv, gr->bbx.w1, gr->bbx.w2, p, 0);
+                GetRectPts(&bx->cp, &bx->hv, gr->bbx.w1, gr->bbx.w2, p, 0.2);
                 cv::Point _points[1][4];
                 // 绘制当前的包围框
                 for (int i = 0; i < 4; i ++) {
@@ -246,7 +246,7 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
                 // 查找是否有Bbox包围了点pnt，返回pnt的标签和instance id
                 if (pntPixel.x >= 0 && pntPixel.y >= 0 && pntPixel.x < curLidar.rows && pntPixel.y < curLidar.cols) {
                     if (bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[0] != 0
-                        && bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[0]+0.2 >= pnt.z) {
+                        && bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[0]+0.35 >= pnt.z) {
                         // bbox内的激光点
                         setPixel(curLidar, pntPixel, 0, 255, 0);
                         ptLabel = bboxMap.at<cv::Vec3f>(pntPixel.x, pntPixel.y)[1];
@@ -262,56 +262,59 @@ void SampleGenerator::GenerateAllSamplesInRangeImage(RMAP *prm_, RMAP *first_prm
 
             int l_bak;
             lab_bak_fp.read((char*)&l_bak, sizeof(int));
-            l_bak = l_bak & 0xffff;
+            l_bak = l_bak & 0xFFFF;
             if (ptLabel > 0) {
                 if (ptLabel < 22){ // 包围框中的点
                     int l = ptLabel;
                     // 找一下激光点是不是已经有标注了
                     if (regionIdMapLabel.find(tmpRegId) != regionIdMapLabel.end()) {
                         l = seglog->colorTable[regionIdMapLabel[tmpRegId]][3];
-                        // 如果包围框内的点是非地面点，那么用包围框标签赋值
-                        if (l != 22) {
+                        // bbox_overwrite_flag 是0或1的时候强制赋值instance id+label
+                        if (bbox_overwrite_flag == 0 || bbox_overwrite_flag == 1) {
+                            // 包围框内的点全部强制赋值
                             l = ptLabel;
                         }
-                        else if (l != ptLabel) { // 已经有了地面点标注，那么不归为这个Instance
-                            ptInstance = -1;
-                        }
                     }
-                    if (tmpRegId == GROUND) {l = 22; ptInstance = -1;}
+                    // 地面点不强制赋值
+//                    if (tmpRegId == GROUND) {l = 22; ptInstance = -1;}
+                    // bbox_overwrite_flag==2的时候只把包围框内同类别的点赋值instance id, 保留labels_bak中的类别
+                    if (bbox_overwrite_flag == 2) {
+                        l = l_bak;
+                    }
                     // 如果有instance标签(高16位记录instance id，低16位记录类别)
-                    if (ptInstance > 0) {l += (ptInstance<<16);}
+                    if (ptInstance > 0 && l == ptLabel) {l += (ptInstance<<16);}
                     lab_fp.write((char*) &l, sizeof(int));
                 }
-                else
+                else    // 非包围框中的点
                 if (regionIdMapLabel.find(ptLabel) != regionIdMapLabel.end()) {
                     int l = seglog->colorTable[regionIdMapLabel[ptLabel]][3];
                     // 如果有instance标签(高16位记录instance id，低16位记录类别)
-                    if (ptInstance > 0) l += (ptInstance<<16);
-                    if (bbox_overwrite_flag)
+//                    if (ptInstance > 0 && l == ptLabel) l += (ptInstance<<16);
+                    if (bbox_overwrite_flag == 1)
                         lab_fp.write((char*) &l, sizeof(int));
-                    else
+                    else if (bbox_overwrite_flag == 0 || bbox_overwrite_flag == 2)
                         lab_fp.write((char*) &l_bak, sizeof(int));
                 }
                 else {
                     int l = 0; // unlabelled
-                    if (bbox_overwrite_flag)
+                    if (bbox_overwrite_flag == 1)
                         lab_fp.write((char*) &l, sizeof(int));
-                    else
+                    else if (bbox_overwrite_flag == 0 || bbox_overwrite_flag == 2)
                         lab_fp.write((char*) &l_bak, sizeof(int));
                 }
             }
             else if (ptLabel == GROUND) {
                 int l = 22;
-                if (bbox_overwrite_flag)
+                if (bbox_overwrite_flag == 1)
                     lab_fp.write((char*) &l, sizeof(int));
-                else
+                else  if (bbox_overwrite_flag == 0 || bbox_overwrite_flag == 2)
                     lab_fp.write((char*) &l_bak, sizeof(int));
             }
             else {
                 int l = 0;
-                if (bbox_overwrite_flag)
+                if (bbox_overwrite_flag == 1)
                     lab_fp.write((char*) &l, sizeof(int));
-                else
+                else if (bbox_overwrite_flag == 0 || bbox_overwrite_flag == 2)
                     lab_fp.write((char*) &l_bak, sizeof(int));
             }
         }

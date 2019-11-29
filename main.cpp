@@ -32,7 +32,7 @@ double FAC_HEIGHT;
 
 point3d calib_shv, calib_ang;
 bool flagBbox;
-bool bbox_overwrite_flag;
+int bbox_overwrite_flag;
 
 void loadCalibFile(std::string calibFileName)
 {
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     std::printf("[colortable](default): colortable.txt\n");
     std::printf("[output_dir](default): data_for_point_labeler\n");
     std::printf("[bbox](optional): bbx-all.log\n");
-    std::printf("[bbox_overwrite_flag](optional): If bbox is not empty, must have this parameter. 0 means only overwrite labels in bbox, 1 means overwrite all labels.\n");
+    std::printf("[bbox_overwrite_flag](optional): If bbox is not empty, must have this parameter. 0 means only overwrite labels in bbox, 1 means overwrite all labels. 2 means only overwrite instance id\n");
 
     if (argc < 3) {
         std::fprintf(stderr, "Args not enough !\n");
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
             return 0;
         }
     }
-    bbox_overwrite_flag = true;
+    bbox_overwrite_flag = 1;
     // 读入包围框文件，包围框用于初始点云标签和instance信息
     flagBbox = false;
     if (argc > 6) {
@@ -97,7 +97,10 @@ int main(int argc, char* argv[])
             std::fprintf(stderr, "Loading bbox file failed!\n");
         }
         if (atoi(argv[7]) == 0) {
-            bbox_overwrite_flag = false;
+            bbox_overwrite_flag = 0;
+        }
+        if (atoi(argv[7]) == 2) {
+            bbox_overwrite_flag = 2;
         }
         printf("bbox_overwrite_flag: %d\n", atoi(argv[7]));
     }

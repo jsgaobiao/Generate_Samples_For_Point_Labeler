@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.6.0, 2019-11-27T15:26:12. -->
+<!-- Written by QtCreator 4.6.0, 2019-11-29T11:10:03. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -246,7 +246,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/gaobiao/Documents/GenerateSamplesForPointLabeler/GenerateSamplesForPointLabeler.pro</value>
     <value type="bool" key="QmakeProjectManager.QmakeRunConfiguration.UseLibrarySearchPath">true</value>
-    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">20190331133302_4-segn.dsvl 20190331133302_4-transproc.log P40n.calib colortable.txt data_for_point_labeler 20190331133302_4-bbx-all.log 0</value>
+    <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments">20190331133302_4-segn.dsvl 20190331133302_4-transproc.log P40n.calib colortable.txt data_for_point_labeler 20190331133302_4-bbx-all.log 2</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.ProFile">GenerateSamplesForPointLabeler.pro</value>
     <value type="bool" key="Qt4ProjectManager.Qt4RunConfiguration.UseDyldImageSuffix">false</value>
     <value type="QString" key="Qt4ProjectManager.Qt4RunConfiguration.UserWorkingDirectory"></value>
