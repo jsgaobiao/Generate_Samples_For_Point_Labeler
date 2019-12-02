@@ -24,6 +24,8 @@
 
 ## 数据准备
 
+数据存放在ftp://poss.pku.edu.cn/local/POSS-V/3DLidarBbx/processdata路径下，共6段数据，请将需要标注的数据段下载到本地
+
 1. **dsvl** : 包含点云数据和类别标签的二进制数据格式
 
 2. **transproc.log**: 基于rangeimage的标注结果
@@ -38,27 +40,31 @@
 
 ## 数据格式转换 ##
 
-1. **编译GenerateSamplesForPointLabeler**
+1. **编译GenerateSamplesForPointLabeler**，并在终端中运行
 
    ```bash
-   ./GenerateSamplesForPointLabeler [dsvl] [transproc.log] [calib] [colortable] [output_dir] [bbox] [bbox_overwrite_flag]
+   ./GenerateSamplesForPointLabeler [*segn.dsvl] [transproc.log] [calib] [colortable] [output_dir] [bbox] [bbox_overwrite_flag]
    # 第一次转换数据时，bbox_overwrite_flag置1
    # 如果已经用point_labeler工具标注了部分点云，请将已标注的标签存入labels_bak文件夹中，并将bbox_overwrite_flag置0
    ```
 
+   例如：第0段数据需要执行的命令为
+
+   *./GenerateSamplesForPointLabeler 20190331133302_0-segn.dsvl 20190331133302_0-transproc.log P40n.calib colortable.txt data_for_point_labeler_0 20190331133302_0-bbx-all.log  1*
+
    将中括号中的参数替换为对应的内容，说明如下：
 
-   [dsvl](required): 包含点云数据和类别标签的二进制数据格式，例如20190331133302_4-seg.dsvl-timefix
-   [transproc.log](required): 基于rangeimage的标注结果，例如20190331133302_4-transproc.log
+   [dsvl](required): 包含点云数据和类别标签的二进制数据格式，例如20190331133302_0-segn.dsvl
+   [transproc.log](required): 基于rangeimage的标注结果，例如20190331133302_0-transproc.log
    [calib](default): 标定参数，默认是P40n.calib
    [colortable](default): 类别标签和可视化颜色的映射表，默认是colortable.txt
-   [output_dir](default): 输入数据转换结果的文件夹，默认是data_for_point_labeler
+   [output_dir](default): 输入数据转换结果的文件夹，例如第0段数据是data_for_point_labeler_0
    [bbox](optional): （可选）3d的包围框，数据段中所有instance物体的3D包围框信息（自动生成+少量人工矫正），例如bbx-all.log
    [bbox_overwrite_flag](optional): （可选，和bbox参数同时存在，If bbox is not empty, must have this parameter.）该值为0表示保留labels_bak中的标签信息(labels_bak文件夹默认在output_dir下)，只覆盖包围框中的标签和instance id； 若该值为1则保留transproc中的标签和3d box中的标签和instance id
 
 
 
-   **完成上述步骤后，在output_dir中（默认是data_for_point_labeler）应该包括 :**
+   **完成上述步骤后，在output_dir中（例如data_for_point_labeler_0）应该包括 :**
 
    (1) 文件夹：labels, tag, velodyne
 
