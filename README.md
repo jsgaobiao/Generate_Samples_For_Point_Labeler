@@ -78,6 +78,8 @@
 
    1. **将labels.xml中的内容替换为SemanticPOSS对应的内容**
 
+      在ftp://poss.pku.edu.cn/local/POSS-V/SemanticPOSS下
+
    2. **修改setting.cfg的设置，建议配置如下：（如果程序崩溃或内存不够，可以将tile size调小）**
 
       ```
@@ -121,6 +123,8 @@
 
 # 数据标注顺序
 
+在ftp://poss.pku.edu.cn/local/POSS-V/SemanticPOSS下，有对应步骤的视频教程
+
 1. 打开百度街景，找到待标注的区域，熟悉待标注的场景
 2. 先标注**建筑物**
 3. 标注**植被**区域（一般是成片的绿化区，包括草坪和树木），基本原则是**由低到高标注**
@@ -138,3 +142,21 @@
    2. 重叠的运动的物体轨迹怎么办？
       1. 使用visuals标签页中的show scan range来辅助标注
       2. 使用visuals标签页中的show single scan来单帧标注（技巧：方向键前进后退，按住鼠标刷标签）
+
+
+
+## 数据类型说明 ##
+
+c-1-person  行人
+
+c-2+person 多个行人（不用这个标签）
+
+c-rider 骑自行车的人
+
+board1  站在地上的方形标牌
+
+board2  悬空的标牌（一般是道路指示牌）
+
+board3  下面是细细的杆子的标牌
+
+con-stone  锥桶/石头
