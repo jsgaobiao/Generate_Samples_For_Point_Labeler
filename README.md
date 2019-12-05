@@ -109,11 +109,11 @@
 
    6. 操作界面说明
 
-      ![](/home/gaobiao/Documents/GenerateSamplesForPointLabeler/README_assets/ui.png)
+      ![](README_assets/ui.png)
 
-      ![](/home/gaobiao/Documents/GenerateSamplesForPointLabeler/README_assets/labels.png)
+      ![](README_assets/labels.png)
 
-      ![](/home/gaobiao/Documents/GenerateSamplesForPointLabeler/README_assets/visuals.png)
+      ![](README_assets/visuals.png)
 
 
 
