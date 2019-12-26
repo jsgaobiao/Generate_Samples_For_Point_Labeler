@@ -62,6 +62,8 @@
    [bbox](optional): （可选）3d的包围框，数据段中所有instance物体的3D包围框信息（自动生成+少量人工矫正），例如bbx-all.log
    [bbox_overwrite_flag](optional): （可选，和bbox参数同时存在，If bbox is not empty, must have this parameter.）该值为0表示保留labels_bak中的标签信息(labels_bak文件夹默认在output_dir下)，只覆盖包围框中的标签和instance id； 若该值为1则保留transproc中的标签和3d box中的标签和instance id
 
+### **`注意`**：标注完成后，要应用自动生成的instance id，需要将labels文件夹复制一份至labels_bak，并将bbox_overwrite_flag置为2，其他参数替换为数据段对应的文件，再运行GenerateSamplesForPointLabeler
+
 
 
    **完成上述步骤后，在output_dir中（例如data_for_point_labeler_0）应该包括 :**
